@@ -17,7 +17,12 @@ def get_settings():
     default_settings_path = zeal_path + '/Zeal.sublime-settings'
     user_settings_path = user_path + '/Zeal.sublime-settings'
     if not os.path.exists(user_settings_path):
-        shutil.copyfile(default_settings_path, user_settings_path)
+        if sublime.version() >= '3000':
+            zs = sublime.load_resource("Packages/Zeal/Zeal.sublime-settings")
+            with open(user_settings_path, "w") as f:
+                f.write(zs)
+        else:
+            shutil.copyfile(default_settings_path, user_settings_path)
 
     return sublime.load_settings('Zeal.sublime-settings')
 
