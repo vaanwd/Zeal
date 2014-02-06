@@ -1,0 +1,10 @@
+[
+    {
+        "keys": ["f1"],
+        "command": "zeal_search_selection"
+    },
+    {
+        "keys": ["shift+f1"],
+        "command": "zeal_search"
+    }
+]
