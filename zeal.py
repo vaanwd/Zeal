@@ -178,7 +178,7 @@ class ZealSearchSelectionCommand(sublime_plugin.TextCommand):
                     for title, files in items.items():
                         popup_list.append([title, 'Language: %s' % (files['lang'])])
                 elif len(items) == 1:
-                    open_zeal(language, text, False)
+                    open_zeal(items.values()[0]['zeal_lang'], text, False)
                 else:
                     sublime.status_message('No Zeal mapping was found for %s language.' % (language))
 
