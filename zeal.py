@@ -175,7 +175,14 @@ class ZealSearchSelectionCommand(sublime_plugin.TextCommand):
                         items[item[0]] = item[1]
 
                 if len(items) > 1:
-                    for title, files in items.items():
+                    srt = None
+                    sort_res = get_settings().get('mapping_sort')
+                    if(sort_res):
+                        import operator
+                        srt = sorted(items.items(), key=operator.itemgetter(0))
+                    else:
+                        srt = items.items()
+                    for title, files in srt:
                         popup_list.append([title, 'Language: %s' % (files['lang'])])
                 elif len(items) == 1:
                     open_zeal(list(items.values())[0]['zeal_lang'], text, False)
