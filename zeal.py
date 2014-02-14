@@ -129,14 +129,10 @@ def open_zeal(lang, text, join_command):
             cmd = []
             cmd.append(zeal_exe)
             cmd.append(u"--query")
-            cmd.append(u"'")
             if join_command:
                 cmd.append(text)
             else:
-                cmd.append(lang)
-                cmd.append(u":")
-                cmd.append(text)
-            cmd.append(u"'")
+                cmd.append(lang + ":" + text)
             subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=False)
         except Exception as e:
             sublime.status_message("Zeal - (%s)" % (e))
