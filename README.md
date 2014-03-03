@@ -1,6 +1,6 @@
 # Zeal for Sublime Text 2/3
 
-Zeal package for Sublime Text using [Zeal](http://zealdocs.org/) documentation browser witch is similar with [Dash](http://kapeli.com/dash/).
+Zeal package for Sublime Text using [Zeal](http://zealdocs.org/) documentation browser which is similar to [Dash](http://kapeli.com/dash/).
 
 *Tested in Windows/Linux.*  
 
