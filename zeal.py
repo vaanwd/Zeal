@@ -110,12 +110,41 @@ def selection(view):
             return None
     return None
 
+def selection_erlang(view):
+    cur_pos = view.sel()[0].a
+    scope_reg = view.line(cur_pos)
+
+    def get_sym(pos):
+        sym = view.substr(sublime.Region(pos, pos + 1))
+        return sym
+
+    rule_type = set(['.', '#'])
+    delims = set([
+        ' ', '"', "'", '<', '>', '(', ')', '/', '\n',
+    ])
+    all_delims = rule_type | delims
+    left = cur_pos
+    while get_sym(left) in delims:
+        left -= 1
+    while left > scope_reg.a and get_sym(left) not in all_delims:
+        left -= 1
+    if get_sym(left) in all_delims:
+        left += 1
+    right = cur_pos
+    while right < scope_reg.b and get_sym(right) not in all_delims:
+        right += 1
+    return view.substr(sublime.Region(left, right))
+
+
 
 def get_word(view):
     word = None
     if language == 'css' or language == 'scss' or language == 'sass' \
         or language == 'less':
         word = get_css_class_or_id(view)
+    elif language == 'erlang':
+        word = selection_erlang(view)
+        print(word)
     else:
         word = selection(view)
     return word
