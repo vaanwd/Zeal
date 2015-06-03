@@ -31,6 +31,8 @@ def get_language(view):
     scope = view.scope_name(view.sel()[0].begin()).strip()
     getlang = scope.split('.')
     language = getlang[-1]
+    # some langaue like CmakeEditor is cmakeeditor keyword
+    language = language.split()[0]
     if language == 'basic':
         language = getlang[-2]
     if language == 'html':
@@ -50,6 +52,8 @@ def get_language(view):
         language = 'sass'
     if 'source.actionscript.2' in scope:
         language = 'actionscript'
+    if 'source.cmake' in scope:
+        language = 'cmake'
     del getlang
     return language
 
