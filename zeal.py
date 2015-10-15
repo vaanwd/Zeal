@@ -162,7 +162,7 @@ def open_zeal(lang, text, join_command):
             cmd = []
             cmd.append(zeal_exe)
             cmd.append(u"--query")
-            if join_command:
+            if join_command or lang is None or lang == '':
                 cmd.append(text)
             else:
                 cmd.append(lang + ":" + text)
