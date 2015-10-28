@@ -7,7 +7,7 @@
   "zeal_command": "/usr/bin/zeal",
 
   /**
-   *  Sort maaping results.
+   *  Sort mapping results.
    */
   "mapping_sort" : true,
 
