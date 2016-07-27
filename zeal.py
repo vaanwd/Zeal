@@ -159,14 +159,14 @@ def open_zeal(lang, text, join_command):
 
     if os.path.isfile(zeal_exe):
         try:
-            cmd = []
-            cmd.append(zeal_exe)
-            cmd.append(u"--query")
+            cmd = [zeal_exe, u"--query"]
             if join_command or lang is None or lang == '':
                 cmd.append(text)
             else:
                 cmd.append(lang + ":" + text)
-            subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=False)
+            # Change cwd so that Zeal won't prevent ST updates on Windows
+            # where it would hold a handle to the ST directory.
+            subprocess.Popen(cmd, cwd=os.path.dirname(zeal_exe))
         except Exception as e:
             sublime.status_message("Zeal - (%s)" % (e))
     else:
