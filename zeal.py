@@ -159,7 +159,7 @@ def open_zeal(lang, text, join_command):
 
     if os.path.isfile(zeal_exe):
         try:
-            cmd = [zeal_exe, u"--query"]
+            cmd = [zeal_exe]
             if join_command or lang is None or lang == '':
                 cmd.append(text)
             else:
