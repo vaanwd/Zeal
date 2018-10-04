@@ -28,7 +28,8 @@ def get_settings():
 
 
 def get_language(view):
-    scope = view.scope_name(view.sel()[0].begin()).strip()
+    scopes = view.scope_name(view.sel()[0].begin()).split()
+    scope = scopes[0].strip()
     getlang = scope.split('.')
     language = getlang[-1]
     # some langaue like CmakeEditor is cmakeeditor keyword
@@ -54,6 +55,8 @@ def get_language(view):
         language = 'actionscript'
     if 'source.cmake' in scope:
         language = 'cmake'
+    if 'source.python' in scope:
+        language = 'python'
     del getlang
     return language
 
