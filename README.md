@@ -8,12 +8,12 @@ Zeal package for Sublime Text using [Zeal](http://zealdocs.org/) documentation b
 
 Multiple results for PHP mapping.
 
-![Multiple results for PHP mapping](http://www.vaanwebdesign.ro/includes/images/zeal_1.png)
+![Multiple results for PHP mapping](https://pictr.com/images/2018/10/05/06wcMI.png)
 <br/>
 <br/>
 Custom search in Zeal docsets.
 
-![Custom search in Zeal docsets](http://www.vaanwebdesign.ro/includes/images/zeal_2.png)
+![Custom search in Zeal docsets](https://pictr.com/images/2018/10/05/06wtYP.png)
 
 ## Installation
 
@@ -40,7 +40,7 @@ Go to your Sublime Text 2 `Packages` directory and clone the repository using th
 `Shift` + `F1` - Open Zeal search bar.
 
 ## Mapping example
-To mapping other language for Zeal docset you need to edit `User\Zeal.sublime-settings`:
+To map other language for Zeal docset you need to edit `User\Zeal.sublime-settings`:
 
 	{
 	  /**
