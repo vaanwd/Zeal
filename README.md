@@ -4,7 +4,7 @@ Zeal package for Sublime Text using [Zeal](http://zealdocs.org/) documentation b
 
 *Tested in Windows/Linux.*  
 
-##Screen-shots
+## Screen-shots
 
 Multiple results for PHP mapping.
 
