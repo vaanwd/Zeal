@@ -20,6 +20,8 @@
     "CSS": {"lang": "css", "zeal_lang": "css"},
     "PHP": {"lang": "php", "zeal_lang": "php"},
     "Python": {"lang": "python", "zeal_lang": "python"},
-    "Ruby": {"lang": "ruby", "zeal_lang":"ruby"}
+    "Ruby": {"lang": "ruby", "zeal_lang":"ruby"},
+    "Clojure": {"lang": "clojure", "zeal_lang": "clojure"},
+    "ClojureScript": {"lang": "clojurescript", "zeal_lang": "cljs"},
   }
 }
