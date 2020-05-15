@@ -116,7 +116,6 @@ class ZealSearchSelectionCommand(sublime_plugin.TextCommand):
             self.view.window().show_quick_panel(
                 [lang.name for lang in languages],
                 lambda i: open_zeal(languages[i], text) if i != -1 else None,
-                sublime.MONOSPACE_FONT,
             )
 
 
