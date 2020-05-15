@@ -1,3 +1,4 @@
+import functools
 import operator
 import re
 import subprocess
@@ -14,6 +15,7 @@ def plugin_loaded():
     settings = sublime.load_settings('Zeal.sublime-settings')
 
 
+@functools.total_ordering
 class Language:
     """A language configuration item, computing defaults based on the given name."""
     def __init__(self, name, zeal_name=None, selector=None):
@@ -33,6 +35,9 @@ class Language:
             ")".format(self=self)
         )
 
+    def __gt__(self, other):
+        return self.name > other.name
+
 
 def get_word(view):
     for region in view.sel():
@@ -49,78 +54,97 @@ def get_word(view):
     return None, None
 
 
-def open_zeal(language, text):
+def query_string(zeal_name, text):
+    return "{}:{}".format(zeal_name, text) if zeal_name else text
+
+
+def status(msg):
+    sublime.status_message("Zeal: {}".format(msg))
+
+
+def open_zeal(query):
     cmd_setting = settings.get('zeal_command', "zeal")
     cmd_path = shutil.which(cmd_setting)
     if not cmd_path:
         sublime.error_message("Could not find your Zeal executable. ({})"
                               '\n\nPlease edit Zeal.sublime-settings'
                               .format(cmd_setting))
-
-    cmd = [
-        cmd_path,
-        "{}:{}".format(language.zeal_name, text) if language else text,
-    ]
+        return
     try:
-        subprocess.Popen(cmd)
+        subprocess.Popen([cmd_path, query])
     except Exception as e:
-        sublime.status_message("Zeal: {}".format(e))
+        status(e)
         raise
 
 
 def match_languages(languages, scope):
     with_scores = [(lang.score(scope), lang) for lang in languages]
     matching = filter(operator.itemgetter(0), with_scores)
-    sorted_ = sorted(matching, key=operator.itemgetter(0))
-    return map(operator.itemgetter(1), sorted_)
+    return map(operator.itemgetter(1), sorted(matching))
 
 
 class ZealSearchSelectionCommand(sublime_plugin.TextCommand):
 
-    def run(self, edit):
+    handler = None
+
+    def input(self, args):
+        if self.handler:
+            return self.handler
+
+    def run(self, edit, zeal_name=None):
+        self.handler = None
         text, scope = get_word(self.view)
+
         if not text:
-            sublime.status_message("No word was selected.")
+            status("No word was selected.")
             return
 
-        language_dicts = settings.get("languages_user", []) + settings.get("languages", [])
-        languages = (Language(**d) for d in language_dicts)
-        languages = list(match_languages(languages, scope))
+        if zeal_name is None:
+            language_dicts = settings.get("languages_user", []) + settings.get("languages", [])
+            languages = (Language(**d) for d in language_dicts)
+            languages = list(match_languages(languages, scope))
 
-        if not languages:
-            fallback = settings.get('fallback', 'none')
-            if fallback == 'stop':
-                sublime.status_message("No Zeal mapping found.")
-                return
-            elif fallback == 'none':
-                open_zeal(None, text)
-                return
-            elif fallback == 'guess':
-                # Find innermost 'source' scope
-                base_scopes = reversed(s for s in scope.split() if s.startswith("source."))
-                if not base_scopes:
-                    return
-                base_scope = base_scopes[0]
-                zeal_name = base_scope.split(".")[1]
-                sublime.status_message("Zeal: No language matched {!r}, guessing {!r}."
-                                       .format(base_scope, zeal_name))
-                languages = [Language(name=zeal_name.title(), zeal_name=zeal_name)]
+            if len(languages) == 1:
+                zeal_name = languages[0].zeal_name
+
+            elif languages:
+                self.handler = ZealNameInputHandler(languages, text)
+                raise TypeError("required positional argument")  # cause ST to call input()
+
             else:
-                sublime.status_message("Zeal: Unrecognized 'fallback' setting.")
-                return
+                # Determine fallback behavior
+                fallback = settings.get('fallback', 'none')
+                if fallback == 'stop':
+                    sublime.status_message("No Zeal mapping found.")
+                    return
+                elif fallback == 'none':
+                    pass  # leave zeal_name unset
+                elif fallback == 'guess':
+                    # Find innermost 'source' scope
+                    base_scopes = reversed(s for s in scope.split() if s.startswith("source."))
+                    if not base_scopes:
+                        return
+                    base_scope = base_scopes[0]
+                    zeal_name = base_scope.split(".")[1]
+                    status("No language matched {!r}, guessed {!r}.".format(base_scope, zeal_name))
+                else:
+                    status("Unrecognized 'fallback' setting.")
+                    return
 
-        if len(languages) == 1:
-            open_zeal(languages[0], text)
+        open_zeal(query_string(zeal_name, text))
 
-        else:
-            self.view.window().show_quick_panel(
-                [lang.name for lang in languages],
-                lambda i: open_zeal(languages[i], text) if i != -1 else None,
-            )
+
+class ZealSearchCommand(sublime_plugin.TextCommand):
+    def input(self, args):
+        if not args.get('text'):
+            return SimpleTextInputHandler('text', placeholder="query string")
+
+    def run(self, edit, text):
+        open_zeal(None, text)
 
 
 class SimpleTextInputHandler(sublime_plugin.TextInputHandler):
-    def __init__(self, param_name, placeholder=""):
+    def __init__(self, param_name, *, placeholder=""):
         self.param_name = param_name
         self._placeholder = placeholder
 
@@ -131,10 +155,17 @@ class SimpleTextInputHandler(sublime_plugin.TextInputHandler):
         return self._placeholder
 
 
-class ZealSearchCommand(sublime_plugin.TextCommand):
-    def input(self, text=None):
-        if not text:
-            return SimpleTextInputHandler('text', "query string")
+class ZealNameInputHandler(sublime_plugin.ListInputHandler):
+    def __init__(self, languages, text):
+        self.languages = languages
+        self.text = text
 
-    def run(self, edit, text):
-        open_zeal(None, text)
+    def placeholder(self):
+        return "Select docset"
+
+    def list_items(self):
+        return sorted(lang.name for lang in self.languages)
+
+    def preview(self, value):
+        lang = next(lang for lang in self.languages if lang.name == value)
+        return sublime.Html("Query: <code>{}:{}</code>".format(lang.zeal_name, self.text))
