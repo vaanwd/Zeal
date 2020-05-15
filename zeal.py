@@ -80,7 +80,7 @@ class ZealSearchSelectionCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         text, scope = get_word(self.view)
         if not text:
-            sublime.status_message('No word was selected.')
+            sublime.status_message("No word was selected.")
             return
 
         language_dicts = settings.get("languages_user", []) + settings.get("languages", [])
@@ -88,15 +88,26 @@ class ZealSearchSelectionCommand(sublime_plugin.TextCommand):
         languages = list(match_languages(languages, scope))
 
         if not languages:
-            # Find innermost 'source' scope
-            base_scopes = reversed(s for s in scope.split() if s.startswith("source."))
-            if not base_scopes:
+            fallback = settings.get('fallback', 'none')
+            if fallback == 'stop':
+                sublime.status_message("No Zeal mapping found.")
                 return
-            base_scope = base_scopes[0]
-            zeal_name = base_scope.split('.')[1]
-            sublime.status_message('No Zeal mapping was found for {!r}, falling back to {!r}.'
-                                   .format(base_scope, zeal_name))
-            languages = [Language(name=zeal_name.title(), zeal_name=zeal_name)]
+            elif fallback == 'none':
+                open_zeal(None, text)
+                return
+            elif fallback == 'guess':
+                # Find innermost 'source' scope
+                base_scopes = reversed(s for s in scope.split() if s.startswith("source."))
+                if not base_scopes:
+                    return
+                base_scope = base_scopes[0]
+                zeal_name = base_scope.split(".")[1]
+                sublime.status_message("Zeal: No language matched {!r}, guessing {!r}."
+                                       .format(base_scope, zeal_name))
+                languages = [Language(name=zeal_name.title(), zeal_name=zeal_name)]
+            else:
+                sublime.status_message("Zeal: Unrecognized 'fallback' setting.")
+                return
 
         if len(languages) == 1:
             open_zeal(languages[0], text)

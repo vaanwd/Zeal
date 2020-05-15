@@ -5,6 +5,13 @@
 	// For Windows: "c:\\Program Files\\Zeal\\zeal.exe"
 	"zeal_command": "zeal",
 
+	// Configure behavior for when none of the languages below match.
+	//
+	// "stop": Do nothing.
+	// "none": Search for the selected word without a namespace.
+	// "guess": Try to guess the language's zeal namespace.
+	"fallback": "none",
+
 	// List of "special" language configuration that help will be offered for,
 	// based on the syntax of the current view.
 	// You can add languages to this list via `user_languages`.
