@@ -118,8 +118,12 @@ class ZealSearchSelectionCommand(sublime_plugin.TextCommand):
                 namespace = matched_docsets[0].namespace
 
             elif matched_docsets:
-                self.handler = ZealNameInputHandler(matched_docsets, text)
-                raise TypeError("required positional argument")  # cause ST to call input()
+                multi_match = settings.get('multi_match', 'select')
+                if multi_match == 'select':
+                    self.handler = ZealNameInputHandler(matched_docsets, text)
+                    raise TypeError("required positional argument")  # cause ST to call input()
+                elif multi_match == 'join':
+                    namespace = ",".join(ds.namespace for ds in matched_docsets)
 
             else:
                 # Determine fallback behavior

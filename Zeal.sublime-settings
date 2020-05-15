@@ -12,6 +12,12 @@
 	// "guess": Try to guess the docset namespace.
 	"fallback": "none",
 
+	// Configure behavior for when multiple docsets were match.
+	//
+	// "select": Open a list of all matching docsets to choose from.
+	// "join": Join all matching docsets for the query.
+	"multi_match": "select",
+
 	// Set of docset configuration that help will be offered for,
 	// based on the syntax of the current view.
 	// You can add docsets to this list via `user_docsets`.
