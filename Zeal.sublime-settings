@@ -15,8 +15,6 @@
 	// Set of docset configuration that help will be offered for,
 	// based on the syntax of the current view.
 	// You can add docsets to this list via `user_docsets`.
-	// When no selector matches,
-	// Zeal will be opened with the base scope name after 'source'.
 	//
 	// The fields are:
 	//    name: The name shown in the popup and used as the default for the others.
