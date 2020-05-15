@@ -18,7 +18,7 @@
                 "command": "edit_settings",
                 "args": {
                   "base_file": "${packages}/Zeal/Zeal.sublime-settings",
-                  "default": "{\n\t\"languages_user\": [$0],\n}",
+                  "default": "{\n\t\"docsets_user\": [$0],\n}",
                 },
               },
               {

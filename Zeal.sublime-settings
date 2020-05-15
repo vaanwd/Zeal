@@ -5,7 +5,7 @@
 	// For Windows: "c:\\Program Files\\Zeal\\zeal.exe"
 	"zeal_command": "zeal",
 
-	// Configure behavior for when none of the languages below match.
+	// Configure behavior for when none of the docsets below match.
 	//
 	// "stop": Do nothing.
 	// "none": Search for the selected word without a namespace.
@@ -14,7 +14,7 @@
 
 	// List of "special" language configuration that help will be offered for,
 	// based on the syntax of the current view.
-	// You can add languages to this list via `user_languages`.
+	// You can add docsets to this list via `user_docsets`.
 	// When no selector matches,
 	// Zeal will be opened with the base scope name after 'source'.
 	//
@@ -24,7 +24,7 @@
 	//        Default: zeal_name: name.lower().replace(" ", "-")
 	//    zeal_name: Namespace to use for searching in Zeal.
 	//        Default: f"source.{zeal_name}`
-	"languages": [
+	"docsets": [
 		{ "name": "ActionScript" },
 		{ "name": "C" },
 		{ "name": "Clojure" },
@@ -48,8 +48,8 @@
 	],
 
 	// Entries in this list will be prepended
-	// to the `languages` list above.
-	"languages_user": [
+	// to the `docsets` list above.
+	"docsets_user": [
 		// { "name": "Sublime Text", "selector": "source.python" },
 	],
 }

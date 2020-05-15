@@ -16,8 +16,8 @@ def plugin_loaded():
 
 
 @functools.total_ordering
-class Language:
-    """A language configuration item, computing defaults based on the given name."""
+class Docset:
+    """A docset configuration item, computing defaults based on the given name."""
     def __init__(self, name, zeal_name=None, selector=None):
         self.name = name
         self.zeal_name = zeal_name or name.lower().replace(" ", "-")
@@ -77,8 +77,8 @@ def open_zeal(query):
         raise
 
 
-def match_languages(languages, scope):
-    with_scores = [(lang.score(scope), lang) for lang in languages]
+def match_docsets(docsets, scope):
+    with_scores = [(lang.score(scope), lang) for lang in docsets]
     matching = filter(operator.itemgetter(0), with_scores)
     return map(operator.itemgetter(1), sorted(matching))
 
@@ -100,15 +100,15 @@ class ZealSearchSelectionCommand(sublime_plugin.TextCommand):
             return
 
         if zeal_name is None:
-            language_dicts = settings.get("languages_user", []) + settings.get("languages", [])
-            languages = (Language(**d) for d in language_dicts)
-            languages = list(match_languages(languages, scope))
+            docset_dicts = settings.get("docsets_user", []) + settings.get("docsets", [])
+            docsets = (Docset(**d) for d in docset_dicts)
+            docsets = list(match_docsets(docsets, scope))
 
-            if len(languages) == 1:
-                zeal_name = languages[0].zeal_name
+            if len(docsets) == 1:
+                zeal_name = docsets[0].zeal_name
 
-            elif languages:
-                self.handler = ZealNameInputHandler(languages, text)
+            elif docsets:
+                self.handler = ZealNameInputHandler(docsets, text)
                 raise TypeError("required positional argument")  # cause ST to call input()
 
             else:
@@ -126,7 +126,7 @@ class ZealSearchSelectionCommand(sublime_plugin.TextCommand):
                         return
                     base_scope = base_scopes[0]
                     zeal_name = base_scope.split(".")[1]
-                    status("No language matched {!r}, guessed {!r}.".format(base_scope, zeal_name))
+                    status("No docset matched {!r}, guessed {!r}.".format(base_scope, zeal_name))
                 else:
                     status("Unrecognized 'fallback' setting.")
                     return
@@ -156,16 +156,16 @@ class SimpleTextInputHandler(sublime_plugin.TextInputHandler):
 
 
 class ZealNameInputHandler(sublime_plugin.ListInputHandler):
-    def __init__(self, languages, text):
-        self.languages = languages
+    def __init__(self, docsets, text):
+        self.docsets = docsets
         self.text = text
 
     def placeholder(self):
         return "Select docset"
 
     def list_items(self):
-        return sorted(lang.name for lang in self.languages)
+        return sorted(lang.name for lang in self.docsets)
 
     def preview(self, value):
-        lang = next(lang for lang in self.languages if lang.name == value)
+        lang = next(lang for lang in self.docsets if lang.name == value)
         return sublime.Html("Query: <code>{}:{}</code>".format(lang.zeal_name, self.text))
