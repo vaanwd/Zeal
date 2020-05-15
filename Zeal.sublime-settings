@@ -1,27 +1,41 @@
 {
-  /**
-   *  Zeal executable path.
-   *  For Linux: /usr/bin/zeal
-   *  For Windows: c:\\Program Files\\Zeal\\zeal.exe
-   */
-  "zeal_command": "/usr/bin/zeal",
+	// Zeal executable path. Subject to $PATH resolution.
+	//
+	// For Linux: "zeal"
+	// For Windows: "c:\\Program Files\\Zeal\\zeal.exe"
+	"zeal_command": "zeal",
 
-  /**
-   *  Sort mapping results.
-   */
-  "mapping_sort" : true,
+	// List of "special" language configuration that help will be offered for,
+	// based on the syntax of the current view.
+	// You can add languages to this list via `user_languages`.
+	// When no selector matches,
+	// Zeal will be opened with the base scope name after 'source'.
+	//
+	// The fields are:
+	//    name: The name shown in the popup and used as the default for the others.
+	//    selector: A scope selector used to determine whether this language is active.
+	//        Default: zeal_name: name.lower().replace(" ", "-")
+	//    zeal_name: Namespace to use for searching in Zeal.
+	//        Default: f"source.{zeal_name}`
+	"languages": [
+		{ "name": "ActionScript" },
+		{ "name": "Clojure" },
+		{ "name": "ClojureScript", "zeal_name": "cljs" },
+		{ "name": "CMake" },
+		{ "name": "CSS" },
+		{ "name": "HTML", "selector": "text.html" },
+		{ "name": "JavaScript", "selector": "source.js" },
+		{ "name": "LESS", "selector": "source.css.less" },
+		{ "name": "Php" },
+		{ "name": "Python" },
+		{ "name": "SASS", "selector": "source.sass" },
+		{ "name": "SCSS", "selector": "source.scss" },
+		{ "name": "Sublime Text", "selector": "source.json.sublime" },
+	],
 
-  /**
-   * Language mapping.
-   */
-  "language_mapping": {
-    "HTML": {"lang": "html", "zeal_lang": "html"},
-    "JavaScript": {"lang": "javascript", "zeal_lang": "javascript"},
-    "CSS": {"lang": "css", "zeal_lang": "css"},
-    "PHP": {"lang": "php", "zeal_lang": "php"},
-    "Python": {"lang": "python", "zeal_lang": "python"},
-    "Ruby": {"lang": "ruby", "zeal_lang":"ruby"},
-    "Clojure": {"lang": "clojure", "zeal_lang": "clojure"},
-    "ClojureScript": {"lang": "clojurescript", "zeal_lang": "cljs"},
-  }
+	// Entries in this list will be prepended
+	// to the `languages` list above.
+	"languages_user": [
+		// { "name": "Sublime Text", "selector": "source.python" },
+	],
 }

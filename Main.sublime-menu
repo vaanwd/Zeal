@@ -3,47 +3,35 @@
     "caption": "Preferences",
     "mnemonic": "n",
     "id": "preferences",
-    "children":
-    [
+    "children": [
       {
         "caption": "Package Settings",
         "mnemonic": "P",
         "id": "package-settings",
-        "children":
-        [
+        "children": [
           {
             "caption": "Zeal",
             "children":
             [
               {
-                "caption": "Settings - Default",
-                "command": "open_file", "args": {"file": "${packages}/Zeal/Zeal.sublime-settings"}
+                "caption": "Settings",
+                "command": "edit_settings",
+                "args": {
+                  "base_file": "${packages}/Zeal/Zeal.sublime-settings",
+                  "default": "{\n\t\"languages_user\": [$0],\n}",
+                },
               },
               {
-                "caption": "Settings - User",
-                "command": "open_file", "args": {"file": "${packages}/User/Zeal.sublime-settings"}
+                "caption": "Key Bindings",
+                "command": "edit_settings",
+                "args": {
+                  "base_file": "${packages}/Zeal/Default (${platform}).sublime-keymap",
+                },
               },
-              { "caption": "-" },
-              {
-                "caption": "Key Bindings – Default",
-                "command": "open_file", "args": {"file": "${packages}/Zeal/Default (Windows).sublime-keymap", "platform": "Windows" }
-              },
-              {
-                "caption": "Key Bindings – Default",
-                "command": "open_file", "args": {"file": "${packages}/Zeal/Default (Linux).sublime-keymap", "platform": "Linux" }
-              },
-              {
-                "caption": "Key Bindings – User",
-                "command": "open_file", "args": {"file": "${packages}/User/Default (Windows).sublime-keymap", "platform": "Windows"}
-              },
-              {
-                "caption": "Key Bindings – User",
-                "command": "open_file", "args": {"file": "${packages}/User/Default (Linux).sublime-keymap", "platform": "Linux"}
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }
+            ],
+          },
+        ],
+      },
+    ],
+  },
 ]
