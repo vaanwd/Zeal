@@ -9,10 +9,10 @@
 	//
 	// "stop": Do nothing.
 	// "none": Search for the selected word without a namespace.
-	// "guess": Try to guess the language's zeal namespace.
+	// "guess": Try to guess the docset namespace.
 	"fallback": "none",
 
-	// List of "special" language configuration that help will be offered for,
+	// Set of docset configuration that help will be offered for,
 	// based on the syntax of the current view.
 	// You can add docsets to this list via `user_docsets`.
 	// When no selector matches,
@@ -21,14 +21,14 @@
 	// The fields are:
 	//    name: The name shown in the popup and used as the default for the others.
 	//    selector: A scope selector used to determine whether this language is active.
-	//        Default: zeal_name: name.lower().replace(" ", "-")
-	//    zeal_name: Namespace to use for searching in Zeal.
-	//        Default: f"source.{zeal_name}`
+	//        Default: namespace: name.lower().replace(" ", "-")
+	//    namespace: Namespace to use for searching in Zeal.
+	//        Default: f"source.{namespace}`
 	"docsets": [
 		{ "name": "ActionScript" },
 		{ "name": "C" },
 		{ "name": "Clojure" },
-		{ "name": "ClojureScript", "zeal_name": "cljs" },
+		{ "name": "ClojureScript", "namespace": "cljs" },
 		{ "name": "CMake" },
 		{ "name": "CSS" },
 		{ "name": "Go" },
@@ -47,9 +47,10 @@
 		{ "name": "Sublime Text", "selector": "source.json.sublime, source.yaml.sublime" },
 	],
 
-	// Entries in this list will be prepended
-	// to the `docsets` list above.
+	// Entries in this list will be added
+	// to the `docsets` set above.
+	// Docsets with the same name override.
 	"docsets_user": [
-		// { "name": "Sublime Text", "selector": "source.python" },
+		// { "name": "Sublime Text", "selector": "source.json.sublime, source.yaml.sublime, source.python" },
 	],
 }

@@ -17,11 +17,15 @@ def plugin_loaded():
 
 @functools.total_ordering
 class Docset:
-    """A docset configuration item, computing defaults based on the given name."""
-    def __init__(self, name, zeal_name=None, selector=None):
+    """A docset configuration item, computing defaults based on the given name.
+
+    Comparison and hashing is reduced to the name attribute only.
+    This is important when building sets, as later additions are discarded.
+    """
+    def __init__(self, name, namespace=None, selector=None):
         self.name = name
-        self.zeal_name = zeal_name or name.lower().replace(" ", "-")
-        self.selector = selector or "source.{}".format(self.zeal_name)
+        self.namespace = namespace or name.lower().replace(" ", "-")
+        self.selector = selector or "source.{}".format(self.namespace)
 
     def score(self, scope):
         return sublime.score_selector(scope, self.selector)
@@ -30,13 +34,19 @@ class Docset:
         return (
             "{self.__class__.__name__}"
             "(name={self.name!r}"
-            ", zeal_name={self.zeal_name!r}"
+            ", namespace={self.namespace!r}"
             ", selector={self.selector!r}"
             ")".format(self=self)
         )
 
     def __gt__(self, other):
         return self.name > other.name
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+    def __hash__(self):
+        return hash(self.name)
 
 
 def get_word(view):
@@ -54,8 +64,8 @@ def get_word(view):
     return None, None
 
 
-def query_string(zeal_name, text):
-    return "{}:{}".format(zeal_name, text) if zeal_name else text
+def query_string(namespace, text):
+    return "{}:{}".format(namespace, text) if namespace else text
 
 
 def status(msg):
@@ -91,7 +101,7 @@ class ZealSearchSelectionCommand(sublime_plugin.TextCommand):
         if self.handler:
             return self.handler
 
-    def run(self, edit, zeal_name=None):
+    def run(self, edit, namespace=None):
         self.handler = None
         text, scope = get_word(self.view)
 
@@ -99,16 +109,16 @@ class ZealSearchSelectionCommand(sublime_plugin.TextCommand):
             status("No word was selected.")
             return
 
-        if zeal_name is None:
+        if namespace is None:
             docset_dicts = settings.get("docsets_user", []) + settings.get("docsets", [])
-            docsets = (Docset(**d) for d in docset_dicts)
-            docsets = list(match_docsets(docsets, scope))
+            docsets = set(Docset(**d) for d in docset_dicts)
+            matched_docsets = list(match_docsets(docsets, scope))
 
-            if len(docsets) == 1:
-                zeal_name = docsets[0].zeal_name
+            if len(matched_docsets) == 1:
+                namespace = matched_docsets[0].namespace
 
-            elif docsets:
-                self.handler = ZealNameInputHandler(docsets, text)
+            elif matched_docsets:
+                self.handler = ZealNameInputHandler(matched_docsets, text)
                 raise TypeError("required positional argument")  # cause ST to call input()
 
             else:
@@ -118,20 +128,20 @@ class ZealSearchSelectionCommand(sublime_plugin.TextCommand):
                     sublime.status_message("No Zeal mapping found.")
                     return
                 elif fallback == 'none':
-                    pass  # leave zeal_name unset
+                    pass  # leave namespace unset
                 elif fallback == 'guess':
                     # Find innermost 'source' scope
                     base_scopes = reversed(s for s in scope.split() if s.startswith("source."))
                     if not base_scopes:
                         return
                     base_scope = base_scopes[0]
-                    zeal_name = base_scope.split(".")[1]
-                    status("No docset matched {!r}, guessed {!r}.".format(base_scope, zeal_name))
+                    namespace = base_scope.split(".")[1]
+                    status("No docset matched {!r}, guessed {!r}.".format(base_scope, namespace))
                 else:
                     status("Unrecognized 'fallback' setting.")
                     return
 
-        open_zeal(query_string(zeal_name, text))
+        open_zeal(query_string(namespace, text))
 
 
 class ZealSearchCommand(sublime_plugin.TextCommand):
@@ -168,4 +178,4 @@ class ZealNameInputHandler(sublime_plugin.ListInputHandler):
 
     def preview(self, value):
         lang = next(lang for lang in self.docsets if lang.name == value)
-        return sublime.Html("Query: <code>{}:{}</code>".format(lang.zeal_name, self.text))
+        return sublime.Html("Query: <code>{}:{}</code>".format(lang.namespace, self.text))
