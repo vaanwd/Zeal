@@ -54,7 +54,6 @@ def get_word(view):
         if region.empty():
             region = view.word(region)
         text = view.substr(region).strip()
-        text = re.sub(r"[/\\{}()<>\[\]|* \t\"']", '', text)  # use word_separators setting?
         if "\n" in text:
             return None, None  # what are you doing?
         elif text:
