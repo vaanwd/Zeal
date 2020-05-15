@@ -26,18 +26,25 @@
 	//        Default: f"source.{zeal_name}`
 	"languages": [
 		{ "name": "ActionScript" },
+		{ "name": "C" },
 		{ "name": "Clojure" },
 		{ "name": "ClojureScript", "zeal_name": "cljs" },
 		{ "name": "CMake" },
 		{ "name": "CSS" },
+		{ "name": "Go" },
+		{ "name": "Haskell" },
 		{ "name": "HTML", "selector": "text.html" },
+		{ "name": "Java" },
 		{ "name": "JavaScript", "selector": "source.js" },
+		{ "name": "LaTeX", "selector": "text.tex.latex" },
 		{ "name": "LESS", "selector": "source.css.less" },
+		{ "name": "Lua" },
 		{ "name": "Php" },
 		{ "name": "Python" },
+		{ "name": "Rust" },
 		{ "name": "SASS", "selector": "source.sass" },
 		{ "name": "SCSS", "selector": "source.scss" },
-		{ "name": "Sublime Text", "selector": "source.json.sublime" },
+		{ "name": "Sublime Text", "selector": "source.json.sublime, source.yaml.sublime" },
 	],
 
 	// Entries in this list will be prepended
