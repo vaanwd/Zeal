@@ -109,31 +109,22 @@ class ZealSearchSelectionCommand(sublime_plugin.TextCommand):
             )
 
 
-# TODO inputhandler
+class SimpleTextInputHandler(sublime_plugin.TextInputHandler):
+    def __init__(self, param_name, placeholder=""):
+        self.param_name = param_name
+        self._placeholder = placeholder
+
+    def name(self):
+        return self.param_name
+
+    def placeholder(self):
+        return self._placeholder
+
+
 class ZealSearchCommand(sublime_plugin.TextCommand):
+    def input(self, text=None):
+        if not text:
+            return SimpleTextInputHandler('text', "query string")
 
-    last_text = ''
-
-    def run(self, edit):
-        panel_view = self.view.window().show_input_panel(
-            'Search in Zeal for:',
-            self.last_text,
-            self.on_done,
-            self.on_change,
-            None,
-        )
-        panel_view.run_command('select_all')
-
-    def on_done(self, text):
-        text = text.strip()
-        if text:
-            self.last_text = text
-            open_zeal(None, text, True)
-        else:
-            sublime.status_message("No text was entered")
-            return
-
-    def on_change(self, text):
-        text = text.strip()
-        if text:
-            self.last_text = text
+    def run(self, edit, text):
+        open_zeal(None, text)
