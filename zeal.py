@@ -1,6 +1,5 @@
 import functools
 import operator
-import re
 import subprocess
 import shutil
 
@@ -100,6 +99,13 @@ class ZealSearchSelectionCommand(sublime_plugin.TextCommand):
         if self.handler:
             return self.handler
 
+    def clear_handler(self):
+        # This method is required to unset the handler
+        # once ST requested the list of items *for real*
+        # (and not to test whether an input handler
+        # would theoretically be available).
+        self.handler = None
+
     def run(self, edit, namespace=None):
         self.handler = None
         text, scope = get_word(self.view)
@@ -119,7 +125,7 @@ class ZealSearchSelectionCommand(sublime_plugin.TextCommand):
             elif matched_docsets:
                 multi_match = settings.get('multi_match', 'select')
                 if multi_match == 'select':
-                    self.handler = ZealNameInputHandler(matched_docsets, text)
+                    self.handler = ZealNameInputHandler(matched_docsets, text, self.clear_handler)
                     raise TypeError("required positional argument")  # cause ST to call input()
                 elif multi_match == 'join':
                     namespace = ",".join(ds.namespace for ds in matched_docsets)
@@ -169,14 +175,17 @@ class SimpleTextInputHandler(sublime_plugin.TextInputHandler):
 
 
 class ZealNameInputHandler(sublime_plugin.ListInputHandler):
-    def __init__(self, docsets, text):
+    def __init__(self, docsets, text, *, on_offer=None):
         self.docsets = docsets
         self.text = text
+        self.on_offer = on_offer
 
     def placeholder(self):
         return "Select docset"
 
     def list_items(self):
+        if self.on_offer:
+            self.on_offer()
         return sorted(lang.name for lang in self.docsets)
 
     def preview(self, value):
