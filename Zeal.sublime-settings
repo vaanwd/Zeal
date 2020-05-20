@@ -20,7 +20,7 @@
 
 	// Set of docset configuration that help will be offered for,
 	// based on the syntax of the current view.
-	// You can add docsets to this list via `user_docsets`.
+	// You can add docsets to this list via `docsets_user`.
 	//
 	// The fields are:
 	//    name: The name shown in the popup and used as the default for the others.
@@ -31,8 +31,8 @@
 	"docsets": [
 		{ "name": "ActionScript" },
 		{ "name": "C" },
-		{ "name": "Clojure" },
-		{ "name": "ClojureScript", "namespace": "cljs" },
+		{ "name": "Clojure", "selector": "source.clojure - source.clojure.clojurescript" },
+		{ "name": "ClojureScript", "selector": "source.clojurescript, source.clojure.clojurescript", "namespace": "cljs" },
 		{ "name": "CMake" },
 		{ "name": "CSS" },
 		{ "name": "Go" },
