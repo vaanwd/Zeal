@@ -159,7 +159,7 @@ class ZealSearchCommand(sublime_plugin.TextCommand):
             return SimpleTextInputHandler('text', placeholder="query string")
 
     def run(self, edit, text):
-        open_zeal(None, text)
+        open_zeal(text)
 
 
 class SimpleTextInputHandler(sublime_plugin.TextInputHandler):
