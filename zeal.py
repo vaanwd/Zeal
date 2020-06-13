@@ -1,259 +1,193 @@
-import sublime
-import sublime_plugin
-import os
+import functools
+import operator
 import subprocess
 import shutil
 
-language = None
+import sublime
+import sublime_plugin
+
+settings = None
 
 
-def get_settings():
-    zeal_path = sublime.packages_path() + '/Zeal'
-    user_path = sublime.packages_path() + '/User'
-
-    if not os.path.isdir(user_path):
-        os.mkdir(user_path)
-
-    default_settings_path = zeal_path + '/Zeal.sublime-settings'
-    user_settings_path = user_path + '/Zeal.sublime-settings'
-    if not os.path.exists(user_settings_path):
-        if sublime.version() >= '3000':
-            zs = sublime.load_resource("Packages/Zeal/Zeal.sublime-settings")
-            with open(user_settings_path, "w") as f:
-                f.write(zs)
-        else:
-            shutil.copyfile(default_settings_path, user_settings_path)
-
-    return sublime.load_settings('Zeal.sublime-settings')
+def plugin_loaded():
+    global settings
+    settings = sublime.load_settings('Zeal.sublime-settings')
 
 
-def get_language(view):
-    scopes = view.scope_name(view.sel()[0].begin()).split()
-    scope = scopes[0].strip()
-    getlang = scope.split('.')
-    language = getlang[-1]
-    # some langaue like CmakeEditor is cmakeeditor keyword
-    language = language.split()[0]
-    if language == 'basic':
-        language = getlang[-2]
-    if language == 'html':
-        if 'php' in getlang:
-            language = 'php'
-        elif 'js' in getlang:
-            language = 'javascript'
-        elif 'css' in getlang:
-            language = 'css'
-    if language == 'js':
-        language = 'javascript'
-    if 'source.css.less' in scope:
-        language = 'less'
-    if 'source.scss' in scope:
-        language = 'scss'
-    if 'source.sass' in scope:
-        language = 'sass'
-    if 'source.actionscript.2' in scope:
-        language = 'actionscript'
-    if 'source.cmake' in scope:
-        language = 'cmake'
-    if 'source.python' in scope:
-        language = 'python'
-    del getlang
-    return language
+@functools.total_ordering
+class Docset:
+    """A docset configuration item, computing defaults based on the given name.
 
+    Comparison and hashing is reduced to the name attribute only.
+    This is important when building sets, as later additions are discarded.
+    """
+    def __init__(self, name, namespace=None, selector=None):
+        self.name = name
+        self.namespace = namespace or name.lower().replace(" ", "-")
+        self.selector = selector or "source.{}".format(self.namespace)
 
-def get_css_class_or_id(view):
-    cur_pos = view.sel()[0].a
-    scope_reg = view.extract_scope(cur_pos)
+    def score(self, scope):
+        return sublime.score_selector(scope, self.selector)
 
-    def get_sym(pos):
-        sym = view.substr(sublime.Region(pos, pos + 1))
-        return sym
+    def __repr__(self):
+        return (
+            "{self.__class__.__name__}"
+            "(name={self.name!r}"
+            ", namespace={self.namespace!r}"
+            ", selector={self.selector!r}"
+            ")".format(self=self)
+        )
 
-    rule_type = set(['.', '#'])
-    delims = set([
-        ' ', '"', "'", '<', '>', '(', ')', '/', '\n', ':',
-    ])
-    all_delims = rule_type | delims
-    left = cur_pos
-    while get_sym(left) in delims:
-        left -= 1
-    while left > scope_reg.a and get_sym(left) not in all_delims:
-        left -= 1
-    if get_sym(left) in all_delims:
-        left += 1
-    right = cur_pos
-    while right < scope_reg.b and get_sym(right) not in all_delims:
-        right += 1
-    return view.substr(sublime.Region(left, right))
+    def __gt__(self, other):
+        return self.name > other.name
 
+    def __eq__(self, other):
+        return self.name == other.name
 
-def selection(view):
-
-    def IsNotNull(value):
-        return value is not None and len(value) > 1
-
-    def badChars(sel):
-        bad_characters = [
-            '/', '\\', ':', '\n', '{', '}', '(', ')',
-            '<', '>', '[', ']', '|', '?', '*', ' ',
-            '""', "'",
-        ]
-        for letter in bad_characters:
-            sel = sel.replace(letter, '')
-        return sel
-
-    selection = ''
-    for region in view.sel():
-        selection += badChars(view.substr(region))
-    if IsNotNull(selection):
-        return selection
-    else:
-        curr_sel = view.sel()[0]
-        word = view.word(curr_sel)
-        selection = badChars(view.substr(word))
-        if IsNotNull(selection):
-            return selection
-        else:
-            return None
-    return None
-
-def selection_erlang(view):
-    cur_pos = view.sel()[0].a
-    scope_reg = view.line(cur_pos)
-
-    def get_sym(pos):
-        sym = view.substr(sublime.Region(pos, pos + 1))
-        return sym
-
-    rule_type = set(['.', '#'])
-    delims = set([
-        ' ', '"', "'", '<', '>', '(', ')', '/', '\n',
-    ])
-    all_delims = rule_type | delims
-    left = cur_pos
-    while get_sym(left) in delims:
-        left -= 1
-    while left > scope_reg.a and get_sym(left) not in all_delims:
-        left -= 1
-    if get_sym(left) in all_delims:
-        left += 1
-    right = cur_pos
-    while right < scope_reg.b and get_sym(right) not in all_delims:
-        right += 1
-    return view.substr(sublime.Region(left, right))
-
+    def __hash__(self):
+        return hash(self.name)
 
 
 def get_word(view):
-    word = None
-    if language == 'css' or language == 'scss' or language == 'sass' \
-        or language == 'less':
-        word = get_css_class_or_id(view)
-    elif language == 'erlang':
-        word = selection_erlang(view)
-        print(word)
-    else:
-        word = selection(view)
-    return word
+    for region in view.sel():
+        if region.empty():
+            region = view.word(region)
+        text = view.substr(region).strip()
+        if "\n" in text:
+            return None, None  # what are you doing?
+        elif text:
+            scope = view.scope_name(region.begin())
+            return text, scope
+
+    return None, None
 
 
-def open_zeal(lang, text, join_command):
-    zeal_exe = get_settings().get('zeal_command')
+def query_string(namespace, text):
+    return "{}:{}".format(namespace, text) if namespace else text
 
-    if os.path.isfile(zeal_exe):
-        try:
-            cmd = [zeal_exe]
-            if join_command or lang is None or lang == '':
-                cmd.append(text)
-            else:
-                cmd.append(lang + ":" + text)
-            # Change cwd so that Zeal won't prevent ST updates on Windows
-            # where it would hold a handle to the ST directory.
-            subprocess.Popen(cmd, cwd=os.path.dirname(zeal_exe))
-        except Exception as e:
-            sublime.status_message("Zeal - (%s)" % (e))
-    else:
-        sublime.error_message('Could not find your %s executable.\n\nPlease edit Zeal.sublime-settings' % (zeal_exe))
+
+def status(msg):
+    sublime.status_message("Zeal: {}".format(msg))
+
+
+def open_zeal(query):
+    cmd_setting = settings.get('zeal_command', "zeal")
+    cmd_path = shutil.which(cmd_setting)
+    if not cmd_path:
+        sublime.error_message("Could not find your Zeal executable. ({})"
+                              '\n\nPlease edit Zeal.sublime-settings'
+                              .format(cmd_setting))
+        return
+    try:
+        subprocess.Popen([cmd_path, query])
+    except Exception as e:
+        status(e)
+        raise
+
+
+def match_docsets(docsets, scope):
+    with_scores = [(lang.score(scope), lang) for lang in docsets]
+    matching = filter(operator.itemgetter(0), with_scores)
+    return map(operator.itemgetter(1), sorted(matching))
 
 
 class ZealSearchSelectionCommand(sublime_plugin.TextCommand):
 
-    def no_word_selected(self):
-        sublime.status_message('No word was selected.')
+    handler = None
 
-    def run(self, edit, **kwargs):
-        global language
-        language = get_language(self.view.window().active_view())
-        text = ""
+    def input(self, args):
+        if self.handler:
+            return self.handler
 
-        for selection in self.view.sel():
-            if selection.empty():
-                text = self.view.word(selection)
+    def clear_handler(self):
+        # This method is required to unset the handler
+        # once ST requested the list of items *for real*
+        # (and not to test whether an input handler
+        # would theoretically be available).
+        self.handler = None
 
-            text = self.view.substr(selection)
+    def run(self, edit, namespace=None):
+        self.handler = None
+        text, scope = get_word(self.view)
 
-            if text == "":
-                text = get_word(self.view)
+        if not text:
+            status("No word was selected.")
+            return
 
-            if text is None:
-                self.no_word_selected()
+        if namespace is None:
+            docset_dicts = settings.get("docsets_user", []) + settings.get("docsets", [])
+            docsets = set(Docset(**d) for d in docset_dicts)
+            matched_docsets = list(match_docsets(docsets, scope))
+
+            if len(matched_docsets) == 1:
+                namespace = matched_docsets[0].namespace
+
+            elif matched_docsets:
+                multi_match = settings.get('multi_match', 'select')
+                if multi_match == 'select':
+                    self.handler = ZealNameInputHandler(matched_docsets, text, self.clear_handler)
+                    raise TypeError("required positional argument")  # cause ST to call input()
+                elif multi_match == 'join':
+                    namespace = ",".join(ds.namespace for ds in matched_docsets)
+
             else:
-                language_mapping = get_settings().get('language_mapping')
-                items = dict()
-                popup_list = []
-
-                for item in language_mapping.items():
-                    if item[1]['lang'] == language:
-                        items[item[0]] = item[1]
-
-                if len(items) > 1:
-                    srt = None
-                    sort_res = get_settings().get('mapping_sort')
-                    if(sort_res):
-                        import operator
-                        srt = sorted(items.items(), key=operator.itemgetter(0))
-                    else:
-                        srt = items.items()
-                    for title, files in srt:
-                        popup_list.append([title, 'Language: %s' % (files['lang'])])
-                elif len(items) == 1:
-                    open_zeal(list(items.values())[0]['zeal_lang'], text, False)
-                else:
-                    sublime.status_message('No Zeal mapping was found for %s language.' % (language))
-
-            def callback(idx):
-                if idx == -1:
+                # Determine fallback behavior
+                fallback = settings.get('fallback', 'none')
+                if fallback == 'stop':
+                    sublime.status_message("No Zeal mapping found.")
                     return
-                self.selected_item = popup_list[idx]
-                open_zeal(items[self.selected_item[0]]['zeal_lang'], text, False)
+                elif fallback == 'none':
+                    pass  # leave namespace unset
+                elif fallback == 'guess':
+                    # Find innermost 'source' scope
+                    base_scopes = reversed(s for s in scope.split() if s.startswith("source."))
+                    if not base_scopes:
+                        return
+                    base_scope = base_scopes[0]
+                    namespace = base_scope.split(".")[1]
+                    status("No docset matched {!r}, guessed {!r}.".format(base_scope, namespace))
+                else:
+                    status("Unrecognized 'fallback' setting.")
+                    return
 
-            if text:
-                if len(kwargs) == 0:
-                    self.view.window().show_quick_panel(popup_list, callback, sublime.MONOSPACE_FONT)
-                elif len(kwargs) != 0:
-                    self.selected_item = kwargs['title']
-                    open_zeal(items[self.selected_item]['zeal_lang'], text, False)
+        open_zeal(query_string(namespace, text))
 
 
 class ZealSearchCommand(sublime_plugin.TextCommand):
+    def input(self, args):
+        if not args.get('text'):
+            return SimpleTextInputHandler('text', placeholder="query string")
 
-    last_text = ''
+    def run(self, edit, text):
+        open_zeal(None, text)
 
-    def run(self, edit):
-        view = self.view
-        self.view_panel = view.window().show_input_panel('Search in Zeal for:', self.last_text, self.after_input, self.on_change, None)
-        self.view_panel.set_name('zeal_command_bar')
 
-    def after_input(self, text):
-        if text.strip() == "":
-            self.last_text = ''
-            sublime.status_message("No text was entered")
-            return
-        else:
-            open_zeal("", text, True)
+class SimpleTextInputHandler(sublime_plugin.TextInputHandler):
+    def __init__(self, param_name, *, placeholder=""):
+        self.param_name = param_name
+        self._placeholder = placeholder
 
-    def on_change(self, text):
-        if text.strip() == "":
-            return
+    def name(self):
+        return self.param_name
 
-        self.last_text = text.strip()
+    def placeholder(self):
+        return self._placeholder
+
+
+class ZealNameInputHandler(sublime_plugin.ListInputHandler):
+    def __init__(self, docsets, text, *, on_offer=None):
+        self.docsets = docsets
+        self.text = text
+        self.on_offer = on_offer
+
+    def placeholder(self):
+        return "Select docset"
+
+    def list_items(self):
+        if self.on_offer:
+            self.on_offer()
+        return sorted(lang.name for lang in self.docsets)
+
+    def preview(self, value):
+        lang = next(lang for lang in self.docsets if lang.name == value)
+        return sublime.Html("Query: <code>{}:{}</code>".format(lang.namespace, self.text))

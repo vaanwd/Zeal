@@ -1,27 +1,60 @@
 {
-  /**
-   *  Zeal executable path.
-   *  For Linux: /usr/bin/zeal
-   *  For Windows: c:\\Program Files\\Zeal\\zeal.exe
-   */
-  "zeal_command": "/usr/bin/zeal",
+	// Zeal executable path. Subject to $PATH resolution.
+	//
+	// For Linux: "zeal"
+	// For Windows: "c:\\Program Files\\Zeal\\zeal.exe"
+	"zeal_command": "zeal",
 
-  /**
-   *  Sort mapping results.
-   */
-  "mapping_sort" : true,
+	// Configure behavior for when none of the docsets below match.
+	//
+	// "stop": Do nothing.
+	// "none": Search for the selected word without a namespace.
+	// "guess": Try to guess the docset namespace.
+	"fallback": "none",
 
-  /**
-   * Language mapping.
-   */
-  "language_mapping": {
-    "HTML": {"lang": "html", "zeal_lang": "html"},
-    "JavaScript": {"lang": "javascript", "zeal_lang": "javascript"},
-    "CSS": {"lang": "css", "zeal_lang": "css"},
-    "PHP": {"lang": "php", "zeal_lang": "php"},
-    "Python": {"lang": "python", "zeal_lang": "python"},
-    "Ruby": {"lang": "ruby", "zeal_lang":"ruby"},
-    "Clojure": {"lang": "clojure", "zeal_lang": "clojure"},
-    "ClojureScript": {"lang": "clojurescript", "zeal_lang": "cljs"},
-  }
+	// Configure behavior for when multiple docsets were match.
+	//
+	// "select": Open a list of all matching docsets to choose from.
+	// "join": Join all matching docsets for the query.
+	"multi_match": "select",
+
+	// Set of docset configuration that help will be offered for,
+	// based on the syntax of the current view.
+	// You can add docsets to this list via `user_docsets`.
+	//
+	// The fields are:
+	//    name: The name shown in the popup and used as the default for the others.
+	//    selector: A scope selector used to determine whether this language is active.
+	//        Default: namespace: name.lower().replace(" ", "-")
+	//    namespace: Namespace to use for searching in Zeal.
+	//        Default: f"source.{namespace}`
+	"docsets": [
+		{ "name": "ActionScript" },
+		{ "name": "C" },
+		{ "name": "Clojure" },
+		{ "name": "ClojureScript", "namespace": "cljs" },
+		{ "name": "CMake" },
+		{ "name": "CSS" },
+		{ "name": "Go" },
+		{ "name": "Haskell" },
+		{ "name": "HTML", "selector": "text.html" },
+		{ "name": "Java" },
+		{ "name": "JavaScript", "selector": "source.js" },
+		{ "name": "LaTeX", "selector": "text.tex.latex" },
+		{ "name": "LESS", "selector": "source.css.less" },
+		{ "name": "Lua" },
+		{ "name": "Php" },
+		{ "name": "Python" },
+		{ "name": "Rust" },
+		{ "name": "SASS", "selector": "source.sass" },
+		{ "name": "SCSS", "selector": "source.scss" },
+		{ "name": "Sublime Text", "selector": "source.json.sublime, source.yaml.sublime" },
+	],
+
+	// Entries in this list will be added
+	// to the `docsets` set above.
+	// Docsets with the same name override.
+	"docsets_user": [
+		// { "name": "Sublime Text", "selector": "source.json.sublime, source.yaml.sublime, source.python" },
+	],
 }
