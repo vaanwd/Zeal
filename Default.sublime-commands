@@ -1,10 +1,34 @@
 [
-    {
-        "caption": "Zeal: Search Selection",
-        "command": "zeal_search_selection",
-    },
-    {
-        "caption": "Zeal: Search",
-        "command": "zeal_search"
+  {
+    "caption": "Preferences: Zeal",
+    "command": "edit_settings",
+    "args": {
+      "base_file": "${packages}/Zeal/Zeal.sublime-settings",
+      "default": "{\n\t\"docsets_user\": [$0],\n}",
     }
+  },
+  {
+    "caption": "Preferences: Zeal Key Bindings",
+    "command": "edit_settings",
+    "args": {
+      "base_file": "${packages}/Zeal/Default (${platform}).sublime-keymap",
+      "default": "[\n\t$0\n]\n",
+    }
+  },
+  {
+    "caption": "Zeal: Open Readme",
+    "command": "open_file",
+    "args": {
+      "file": "${packages}/Zeal/README.md"
+    }
+  },
+
+  {
+    "caption": "Zeal: Search Selection",
+    "command": "zeal_search_selection",
+  },
+  {
+    "caption": "Zeal: Search",
+    "command": "zeal_search",
+  },
 ]
