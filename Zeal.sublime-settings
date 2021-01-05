@@ -12,7 +12,7 @@
 	// "guess": Try to guess the docset namespace.
 	"fallback": "none",
 
-	// Configure behavior for when multiple docsets were match.
+	// Configure behavior for when multiple docsets were matched.
 	//
 	// "select": Open a list of all matching docsets to choose from.
 	// "join": Join all matching docsets for the query.
@@ -24,10 +24,10 @@
 	//
 	// The fields are:
 	//    name: The name shown in the popup and used as the default for the others.
-	//    selector: A scope selector used to determine whether this language is active.
-	//        Default: namespace: name.lower().replace(" ", "-")
 	//    namespace: Namespace to use for searching in Zeal.
-	//        Default: f"source.{namespace}`
+	//        Default: `name.lower().replace(" ", "-")`
+	//    namespace: A scope selector used to determine whether a docset is relevant.
+	//        Default: `f"source.{namespace.lower()}"`
 	"docsets": [
 		{ "name": "ActionScript" },
 		{ "name": "C" },
@@ -46,8 +46,8 @@
 		{ "name": "Php" },
 		{ "name": "Python" },
 		{ "name": "Rust" },
-		{ "name": "SASS", "selector": "source.sass" },
-		{ "name": "SCSS", "selector": "source.scss" },
+		{ "name": "SASS" },
+		{ "name": "SCSS" },
 		{ "name": "Sublime Text", "selector": "source.json.sublime, source.yaml.sublime" },
 	],
 
