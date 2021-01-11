@@ -125,7 +125,8 @@ class ZealSearchSelectionCommand(sublime_plugin.TextCommand):
             elif matched_docsets:
                 multi_match = settings.get('multi_match', 'select')
                 if multi_match == 'select':
-                    self.handler = ZealNameInputHandler(matched_docsets, text, self.clear_handler)
+                    self.handler = NamespaceInputHandler(matched_docsets, text,
+                                                         on_offer=self.clear_handler)
                     raise TypeError("required positional argument")  # cause ST to call input()
                 elif multi_match == 'join':
                     namespace = ",".join(ds.namespace for ds in matched_docsets)
@@ -159,7 +160,7 @@ class ZealSearchCommand(sublime_plugin.TextCommand):
             return SimpleTextInputHandler('text', placeholder="query string")
 
     def run(self, edit, text):
-        open_zeal(None, text)
+        open_zeal(text)
 
 
 class SimpleTextInputHandler(sublime_plugin.TextInputHandler):
@@ -174,7 +175,7 @@ class SimpleTextInputHandler(sublime_plugin.TextInputHandler):
         return self._placeholder
 
 
-class ZealNameInputHandler(sublime_plugin.ListInputHandler):
+class NamespaceInputHandler(sublime_plugin.ListInputHandler):
     def __init__(self, docsets, text, *, on_offer=None):
         self.docsets = docsets
         self.text = text
@@ -186,8 +187,7 @@ class ZealNameInputHandler(sublime_plugin.ListInputHandler):
     def list_items(self):
         if self.on_offer:
             self.on_offer()
-        return sorted(lang.name for lang in self.docsets)
+        return sorted((lang.name, lang.namespace) for lang in self.docsets)
 
     def preview(self, value):
-        lang = next(lang for lang in self.docsets if lang.name == value)
-        return sublime.Html("Query: <code>{}:{}</code>".format(lang.namespace, self.text))
+        return sublime.Html("Query: <code>{}:{}</code>".format(value, self.text))
