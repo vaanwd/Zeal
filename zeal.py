@@ -169,7 +169,7 @@ class ZealSearchSelectionCommand(sublime_plugin.TextCommand):
 
 class ZealSearchCommand(sublime_plugin.TextCommand):
     def input(self, args):
-        if not args.get('text'):
+        if 'text' not in args:
             return SimpleTextInputHandler('text', placeholder="query string")
 
     def run(self, edit, text):
