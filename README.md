@@ -56,4 +56,4 @@ add entries to the `docsets_user` list.
 
 
 [&copy; 2014 Vaan Web Design](https://www.vaanwebdesign.ro) <br>
-[&copy; 2020 FichteFoll](https://github.com/FichteFoll)
+[&copy; 2020-2021 FichteFoll](https://github.com/FichteFoll)
