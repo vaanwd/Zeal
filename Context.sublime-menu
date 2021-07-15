@@ -1,4 +1,10 @@
 [
     { "caption": "-"},
-    { "command": "zeal_search_selection", "caption": "Search Zeal" }
+    { "caption": "Search Zeal",
+      "command": "show_overlay",
+      "args": {
+        "overlay": "command_palette",
+        "command": "zeal_search_selection",
+      },
+    },
 ]

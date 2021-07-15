@@ -1,5 +1,4 @@
 import functools
-import operator
 import subprocess
 import shutil
 
@@ -85,77 +84,92 @@ def open_zeal(query):
         raise
 
 
-def match_docsets(docsets, scope):
+def matching_docsets(scope):
+    docset_dicts = settings.get("docsets_user", []) + settings.get("docsets", [])
+    docsets = set(Docset(**d) for d in docset_dicts)
     with_scores = [(lang.score(scope), lang) for lang in docsets]
-    matching = filter(operator.itemgetter(0), with_scores)
-    return map(operator.itemgetter(1), sorted(matching))
+    return [docset for score, docset in sorted(with_scores) if score]
 
 
 class ZealSearchSelectionCommand(sublime_plugin.TextCommand):
 
-    handler = None
-
     def input(self, args):
-        if self.handler:
-            return self.handler
+        if 'namespace' not in args:
+            text, scope = get_word(self.view)
+            if not text:
+                return
 
-    def clear_handler(self):
-        # This method is required to unset the handler
-        # once ST requested the list of items *for real*
-        # (and not to test whether an input handler
-        # would theoretically be available).
-        self.handler = None
+            namespace = self.resolve_namespace(text, scope)
+            if isinstance(namespace, NamespaceInputHandler):
+                return namespace
+            # If a namespace could be resolved,
+            # we need to run the same procedure in `run` again
+            # because we can't directly pass values from here.
+            # We could cache,
+            # but we would need to consider the underlying settings changing.
 
     def run(self, edit, namespace=None):
-        self.handler = None
         text, scope = get_word(self.view)
-
         if not text:
             status("No word was selected.")
             return
 
         if namespace is None:
-            docset_dicts = settings.get("docsets_user", []) + settings.get("docsets", [])
-            docsets = set(Docset(**d) for d in docset_dicts)
-            matched_docsets = list(match_docsets(docsets, scope))
-
-            if len(matched_docsets) == 1:
-                namespace = matched_docsets[0].namespace
-
-            elif matched_docsets:
-                multi_match = settings.get('multi_match', 'select')
-                if multi_match == 'select':
-                    self.handler = ZealNameInputHandler(matched_docsets, text, self.clear_handler)
-                    raise TypeError("required positional argument")  # cause ST to call input()
-                elif multi_match == 'join':
-                    namespace = ",".join(ds.namespace for ds in matched_docsets)
-
-            else:
-                # Determine fallback behavior
-                fallback = settings.get('fallback', 'none')
-                if fallback == 'stop':
-                    sublime.status_message("No Zeal mapping found.")
-                    return
-                elif fallback == 'none':
-                    pass  # leave namespace unset
-                elif fallback == 'guess':
-                    # Find innermost 'source' scope
-                    base_scopes = reversed(s for s in scope.split() if s.startswith("source."))
-                    if not base_scopes:
-                        return
-                    base_scope = base_scopes[0]
-                    namespace = base_scope.split(".")[1]
-                    status("No docset matched {!r}, guessed {!r}.".format(base_scope, namespace))
-                else:
-                    status("Unrecognized 'fallback' setting.")
-                    return
+            namespace = self.resolve_namespace(text, scope)
+            if not namespace:
+                return
+            elif isinstance(namespace, NamespaceInputHandler):
+                # Fallback if command was called directly through e.g. a key binding.
+                sublime.set_timeout(self.rerun_from_command_palette, 0)
+                return
 
         open_zeal(query_string(namespace, text))
+
+    def rerun_from_command_palette(self):
+        self.view.window().run_command(
+            "show_overlay",
+            {"overlay": "command_palette", "command": "zeal_search_selection"},
+        )
+
+    def resolve_namespace(self, text, scope):
+        matched_docsets = matching_docsets(scope)
+
+        if len(matched_docsets) == 1:
+            return matched_docsets[0].namespace
+
+        elif matched_docsets:
+            multi_match = settings.get('multi_match', 'select')
+            if multi_match == 'select':
+                return NamespaceInputHandler(matched_docsets, text)
+            elif multi_match == 'join':
+                return ",".join(ds.namespace for ds in matched_docsets)
+
+        else:
+            fallback = settings.get('fallback', 'none')
+            if fallback == 'stop':
+                sublime.status_message("No Zeal mapping found.")
+                return None
+            elif fallback == 'none':
+                return ''
+            elif fallback == 'guess':
+                # Find innermost base scope
+                base_scopes = reversed(s for s in scope.split()
+                                       if s.startswith("source.") or s.startswith("text."))
+                if not base_scopes:
+                    sublime.status_message("No Zeal mapping found and could not guess from scope.")
+                    return None
+                base_scope = base_scopes[0]
+                namespace = base_scope.split(".")[1]
+                status("No docset matched {!r}, guessed {!r}.".format(base_scope, namespace))
+                return namespace
+            else:
+                status("Unrecognized 'fallback' setting.")
+                return None
 
 
 class ZealSearchCommand(sublime_plugin.TextCommand):
     def input(self, args):
-        if not args.get('text'):
+        if 'text' not in args:
             return SimpleTextInputHandler('text', placeholder="query string")
 
     def run(self, edit, text):
@@ -174,20 +188,16 @@ class SimpleTextInputHandler(sublime_plugin.TextInputHandler):
         return self._placeholder
 
 
-class ZealNameInputHandler(sublime_plugin.ListInputHandler):
-    def __init__(self, docsets, text, *, on_offer=None):
+class NamespaceInputHandler(sublime_plugin.ListInputHandler):
+    def __init__(self, docsets, text):
         self.docsets = docsets
         self.text = text
-        self.on_offer = on_offer
 
     def placeholder(self):
         return "Select docset"
 
     def list_items(self):
-        if self.on_offer:
-            self.on_offer()
-        return sorted(lang.name for lang in self.docsets)
+        return sorted((lang.name, lang.namespace) for lang in self.docsets)
 
     def preview(self, value):
-        lang = next(lang for lang in self.docsets if lang.name == value)
-        return sublime.Html("Query: <code>{}:{}</code>".format(lang.namespace, self.text))
+        return sublime.Html("Query: <code>{}:{}</code>".format(value, self.text))

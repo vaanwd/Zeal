@@ -11,7 +11,7 @@
     "caption": "Preferences: Zeal Key Bindings",
     "command": "edit_settings",
     "args": {
-      "base_file": "${packages}/Zeal/Default (${platform}).sublime-keymap",
+      "base_file": "${packages}/Zeal/Default.sublime-keymap",
       "default": "[\n\t$0\n]\n",
     }
   },
